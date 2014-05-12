@@ -1,3 +1,5 @@
+![Acceptto](/Acceptto.png "Acceptto")
+
 # Acceptto
 
 Acceptto mfa-web-gem enables multi-factor authentication for your applications and services.
@@ -20,8 +22,8 @@ Or install it yourself as:
 
 1- Add two fields to your user model:
 
-    add_column :users, :m2m_access_token, :string
-    add_column :users, :m2m_authenticated, :boolean
+    add_column :users, :mfa_access_token, :string
+    add_column :users, :mfa_authenticated, :boolean
 
 2- Add Following config variables to your config/environment/development.yml (or desired environment):
 
@@ -31,7 +33,7 @@ Or install it yourself as:
 
 3- you can give users an option two enable multi facto authentication with this link for example in your view:
 
-    <% if !current_user.m2m_access_token.present? %>
+    <% if !current_user.mfa_access_token.present? %>
        <a href="><%= Acceptto::Client.new(Rails.configuration.mfa_app_uid,Rails.configuration.mfa_app_secret,Rails.configuration.mfa_call_back_url).authorize_link %>">Enable MFA</a>
     <% end %>
 
@@ -40,20 +42,20 @@ Or install it yourself as:
     devise_for :users, controllers: { sessions: "sessions" }
     devise_scope :user do		
       match '/auth/mfa_check',    to: 'sessions#mfa_check',   via: :get
-      match '/auth/m2m/callback', to: 'sessions#callback', via: :get
+      match '/auth/mfa/callback', to: 'sessions#callback', via: :get
     end
       
     get "mfa" => 'mfa#index'
 
 5- Add a before_filter to you ApplicationController.rb:
 
-    before_filter :check_m2m_authenticated
+    before_filter :check_mfa_authenticated
 
     private
 
-    # this check is extremely important, without this after doing login and before device accept (from mfa/index.html), user can go anywhere without m2m_authentication!
-    def check_m2m_authenticated
-      if current_user.present? && !current_user.m2m_access_token.empty? && !current_user.m2m_authenticated?
+    # this check is extremely important, without this after doing login and before device accept (from mfa/index.html), user can go anywhere without mfa_authentication!
+    def check_mfa_authenticated
+      if current_user.present? && !current_user.mfa_access_token.empty? && !current_user.mfa_authenticated?
         sign_out(current_user)
         redirect_to root_url, notice: 'MFA Two Factor Authenication required'
       end
@@ -62,62 +64,62 @@ Or install it yourself as:
 
 6- Implement oauth create/callback/check functions in your sessions_controller:
 
-  class SessionsController < Devise::SessionsController
-  	skip_before_filter :check_mfa_authenticated
+    class SessionsController < Devise::SessionsController
+    skip_before_filter :check_mfa_authenticated
 
-  	def create
-  		resource = warden.authenticate!(auth_options)
-  		if resource.mfa_access_token.present?
-  			current_user.update_attribute(:mfa_authenticated, false)
-  			acceptto = Acceptto::Client.new(Rails.configuration.mfa_app_uid,Rails.configuration.mfa_app_secret,Rails.configuration.mfa_call_back_url)
-  			@channel = acceptto.authenticate(resource.mfa_access_token)
-  			flash[:notice] = 'You have 60 seconds to respond to the request sent to your device.'
+    def create
+        resource = warden.authenticate!(auth_options)
+        if resource.mfa_access_token.present?
+            current_user.update_attribute(:mfa_authenticated, false)
+            acceptto = Acceptto::Client.new(Rails.configuration.mfa_app_uid,Rails.configuration.mfa_app_secret,Rails.configuration.mfa_call_back_url)
+            @channel = acceptto.authenticate(resource.mfa_access_token)
+            flash[:notice] = 'You have 60 seconds to respond to the request sent to your device.'
 
-  			redirect_to :controller => 'mfa', :action => 'index', :channel => @channel
-  		else
-  			sign_in(resource_name, resource)
-  			respond_with(resource, location:root_path) do |format|
-  				format.json { render json: resource.as_json(root: false).merge(success: true), status: :created }
-  			end
-  		end
-  	rescue OAuth2::Error => ex
-  		current_user.update_attribute(:m2m_access_token, nil)
-  		redirect_to root_path, notice: 'You have unauthorized MFA access to Acceptto, you will need to Authorize MFA again.'
-  	end
+            redirect_to :controller => 'mfa', :action => 'index', :channel => @channel
+        else
+            sign_in(resource_name, resource)
+            respond_with(resource, location:root_path) do |format|
+                format.json { render json: resource.as_json(root: false).merge(success: true), status: :created }
+            end
+        end
+    rescue OAuth2::Error => ex
+        current_user.update_attribute(:mfa_access_token, nil)
+        redirect_to root_path, notice: 'You have unauthorized MFA access to Acceptto, you will need to Authorize MFA again.'
+    end
 
-  	def mfa_callback
-  		acceptto = Acceptto::Client.new(Rails.configuration.mfa_app_uid,Rails.configuration.mfa_app_secret,Rails.configuration.mfa_call_back_url)
-  		token = acceptto.get_token(params[:code])
-  		current_user.update_attribute(:mfa_access_token, token)
-  		current_user.update_attribute(:mfa_authenticated, true)
+    def mfa_callback
+        acceptto = Acceptto::Client.new(Rails.configuration.mfa_app_uid,Rails.configuration.mfa_app_secret,Rails.configuration.mfa_call_back_url)
+        token = acceptto.get_token(params[:code])
+        current_user.update_attribute(:mfa_access_token, token)
+        current_user.update_attribute(:mfa_authenticated, true)
 
-  		redirect_to root_url, notice: "MFA Access Granted #{token}"
-  	end
+        redirect_to root_url, notice: "MFA Access Granted #{token}"
+    end
 
 
-  	def mfa_check
-  		if current_user.nil?
-  			redirect_to root_url, notice: 'MFA Two Factor Authentication request timed out with no response.'
-  		end
+    def mfa_check
+        if current_user.nil?
+            redirect_to root_url, notice: 'MFA Two Factor Authentication request timed out with no response.'
+        end
 
-  		acceptto = Acceptto::Client.new(Rails.configuration.mfa_app_uid,Rails.configuration.mfa_app_secret,Rails.configuration.mfa_call_back_url)
-  		status = acceptto.mfa_check(current_user.mfa_access_token,params[:channel])
+        acceptto = Acceptto::Client.new(Rails.configuration.mfa_app_uid,Rails.configuration.mfa_app_secret,Rails.configuration.mfa_call_back_url)
+        status = acceptto.mfa_check(current_user.mfa_access_token,params[:channel])
 
-  		if status == 'approved'
-  			current_user.update_attribute(:mfa_authenticated, true)
-  			redirect_to root_url, notice: 'MFA Two Factor Authentication request was accepted.'
-  		elsif status == 'rejected'
-  			current_user.update_attribute(:mfa_authenticated, false)
-  			sign_out(current_user)
-  			redirect_to root_url, notice: 'MFA Two Factor Authentication request was declined.'
-  		else
-  			redirect_to :controller => 'mfa', :action => 'index', :channel => params[:channel]
-  		end
-  	end
-  end
+        if status == 'approved'
+            current_user.update_attribute(:mfa_authenticated, true)
+            redirect_to root_url, notice: 'MFA Two Factor Authentication request was accepted.'
+        elsif status == 'rejected'
+            current_user.update_attribute(:mfa_authenticated, false)
+            sign_out(current_user)
+            redirect_to root_url, notice: 'MFA Two Factor Authentication request was declined.'
+        else
+            redirect_to :controller => 'mfa', :action => 'index', :channel => params[:channel]
+        end
+    end
+    end
 
 7- Create a new controller/view named: app/controllers/mfa_controller.rb and app/views/mfa/index.html.erb, content of mfa/index.html.rb:
-	
+
 	<script type="text/javascript">
     $(function() {
         var faye = new Faye.Client("<%= APP_CONFIG['FAYE_SERVER'] %>");
@@ -175,13 +177,3 @@ Or install it yourself as:
 	<%= javascript_include_tag "#{APP_CONFIG['FAYE_SERVER']}/faye.js", "data-turbolinks-track" => false %>
 
 
-
-
-
-## Contributing
-
-1. Fork it ( http://github.com/<my-github-username>/Acceptto/fork )
-2. Create your feature branch (`git checkout -b my-new-feature`)
-3. Commit your changes (`git commit -am 'Add some feature'`)
-4. Push to the branch (`git push origin my-new-feature`)
-5. Create new Pull Request
