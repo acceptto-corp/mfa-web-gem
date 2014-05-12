@@ -40,11 +40,11 @@ Or install it yourself as:
 4- add the route for callback/check controller in routes.rb:
 
     devise_for :users, controllers: { sessions: "sessions" }
-    devise_scope :user do		
+    devise_scope :user do
       match '/auth/mfa_check',    to: 'sessions#mfa_check',   via: :get
       match '/auth/mfa/callback', to: 'sessions#callback', via: :get
     end
-      
+
     get "mfa" => 'mfa#index'
 
 5- Add a before_filter to you ApplicationController.rb:
@@ -171,7 +171,7 @@ Or install it yourself as:
 
  	   });
 	</script>
-	
+
 8- Add javascript for faye to your head section in layout of your website:
 
 	<%= javascript_include_tag "#{APP_CONFIG['FAYE_SERVER']}/faye.js", "data-turbolinks-track" => false %>
