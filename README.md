@@ -184,7 +184,7 @@ Or install it yourself as:
  	   });
 	</script>
 	
-10- Add javascript for faye to your head section in layout of your website:
+9- Add javascript for faye to your head section in layout of your website:
 
 	<%= javascript_include_tag "#{APP_CONFIG['FAYE_SERVER']}/faye.js", "data-turbolinks-track" => false %>
 
