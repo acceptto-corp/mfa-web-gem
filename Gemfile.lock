@@ -1,0 +1,17 @@
+PATH
+  remote: .
+  specs:
+    Acceptto (0.1.0)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    rake (10.1.0)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  Acceptto!
+  bundler (~> 1.5)
+  rake
