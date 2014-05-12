@@ -120,7 +120,7 @@ Or install it yourself as:
 	
 	<script type="text/javascript">
     $(function() {
-        var faye = new Faye.Client("<%= Acceptto::Client.FAYE_SERVER %>");
+        var faye = new Faye.Client("<%= Acceptto::Client.faye_server_address %>");
         faye.subscribe("/messages/<%= @channel %>", function(data) {
             window.location.replace("/auth/mfa_check?channel=<%= @channel %>");
         });
@@ -172,7 +172,7 @@ Or install it yourself as:
 	
 8- Add javascript for faye to your head section in layout of your website:
 
-	<%= javascript_include_tag "#{Acceptto::Client.FAYE_SERVER}/faye.js", "data-turbolinks-track" => false %>
+	<%= javascript_include_tag "#{Acceptto::Client.faye_server_address}/faye.js", "data-turbolinks-track" => false %>
 
 
 
