@@ -1,8 +1,7 @@
 ![Acceptto](/Acceptto.png "Acceptto")
 
 # Acceptto
-
-Acceptto mfa-web-gem enables multi-factor authentication for your applications and services.
+Acceptto is a Multi-Factor Authentication service that allows the use of your mobile device for authorizing requested logins. A notification in the form of SMS or Push is sent to your registered device, giving you full control to authorize or decline the logins.
 
 ## Installation
 
