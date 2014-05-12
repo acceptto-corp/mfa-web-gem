@@ -1,4 +1,4 @@
-# Acceptto
+## Acceptto
 
 Acceptto mfa-web-gem enables multi-factor authentication for your applications and services.
 
@@ -29,7 +29,7 @@ Or install it yourself as:
     config.mfa_app_secret = 'mfa app secret you got from acceptto'
     config.mfa_call_back_url = 'put your callback url here'
 
-3- you can give users an option two enable multi facto authentication with this link for example in your view:
+3- you can give users an option two enable multi factor authentication with this link for example in your view:
 
     <% if !current_user.m2m_access_token.present? %>
        <a href="><%= Acceptto::Client.new(Rails.configuration.mfa_app_uid,Rails.configuration.mfa_app_secret,Rails.configuration.mfa_call_back_url).authorize_link %>">Enable MFA</a>
@@ -120,7 +120,7 @@ Or install it yourself as:
 	
 	<script type="text/javascript">
     $(function() {
-        var faye = new Faye.Client("<%= APP_CONFIG['FAYE_SERVER'] %>");
+        var faye = new Faye.Client("<%= Acceptto::Client.FAYE_SERVER %>");
         faye.subscribe("/messages/<%= @channel %>", function(data) {
             window.location.replace("/auth/mfa_check?channel=<%= @channel %>");
         });
@@ -172,9 +172,7 @@ Or install it yourself as:
 	
 8- Add javascript for faye to your head section in layout of your website:
 
-	<%= javascript_include_tag "#{APP_CONFIG['FAYE_SERVER']}/faye.js", "data-turbolinks-track" => false %>
-
-
+	<%= javascript_include_tag "#{Acceptto::Client.FAYE_SERVER}/faye.js", "data-turbolinks-track" => false %>
 
 
 
