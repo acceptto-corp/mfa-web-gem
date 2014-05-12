@@ -62,59 +62,59 @@ Or install it yourself as:
 
 6- Implement oauth create/callback/check functions in your sessions_controller:
 
-  class SessionsController < Devise::SessionsController
-  	skip_before_filter :check_mfa_authenticated
+      class SessionsController < Devise::SessionsController
+		skip_before_filter :check_mfa_authenticated
 
-  	def create
-  		resource = warden.authenticate!(auth_options)
-  		if resource.mfa_access_token.present?
-  			current_user.update_attribute(:mfa_authenticated, false)
-  			acceptto = Acceptto::Client.new(Rails.configuration.mfa_app_uid,Rails.configuration.mfa_app_secret,Rails.configuration.mfa_call_back_url)
-  			@channel = acceptto.authenticate(resource.mfa_access_token)
-  			flash[:notice] = 'You have 60 seconds to respond to the request sent to your device.'
+	  	def create
+	  		resource = warden.authenticate!(auth_options)
+	  		if resource.mfa_access_token.present?
+	  			current_user.update_attribute(:mfa_authenticated, false)
+	  			acceptto = Acceptto::Client.new(Rails.configuration.mfa_app_uid,Rails.configuration.mfa_app_secret,Rails.configuration.mfa_call_back_url)
+	  			@channel = acceptto.authenticate(resource.mfa_access_token)
+	  			flash[:notice] = 'You have 60 seconds to respond to the request sent to your device.'
 
-  			redirect_to :controller => 'mfa', :action => 'index', :channel => @channel
-  		else
-  			sign_in(resource_name, resource)
-  			respond_with(resource, location:root_path) do |format|
-  				format.json { render json: resource.as_json(root: false).merge(success: true), status: :created }
-  			end
-  		end
-  	rescue OAuth2::Error => ex
-  		current_user.update_attribute(:m2m_access_token, nil)
-  		redirect_to root_path, notice: 'You have unauthorized MFA access to Acceptto, you will need to Authorize MFA again.'
-  	end
+	  			redirect_to :controller => 'mfa', :action => 'index', :channel => @channel
+	  		else
+	  			sign_in(resource_name, resource)
+	  			respond_with(resource, location:root_path) do |format|
+	  				format.json { render json: resource.as_json(root: false).merge(success: true), status: :created }
+	  			end
+	  		end
+	  		rescue OAuth2::Error => ex
+	  		current_user.update_attribute(:m2m_access_token, nil)
+	  		redirect_to root_path, notice: 'You have unauthorized MFA access to Acceptto, you will need to Authorize MFA again.'
+	  	end
 
-  	def mfa_callback
-  		acceptto = Acceptto::Client.new(Rails.configuration.mfa_app_uid,Rails.configuration.mfa_app_secret,Rails.configuration.mfa_call_back_url)
-  		token = acceptto.get_token(params[:code])
-  		current_user.update_attribute(:mfa_access_token, token)
-  		current_user.update_attribute(:mfa_authenticated, true)
+	  	def mfa_callback
+	  		acceptto = Acceptto::Client.new(Rails.configuration.mfa_app_uid,Rails.configuration.mfa_app_secret,Rails.configuration.mfa_call_back_url)
+	  		token = acceptto.get_token(params[:code])
+	  		current_user.update_attribute(:mfa_access_token, token)
+	  		current_user.update_attribute(:mfa_authenticated, true)
 
-  		redirect_to root_url, notice: "MFA Access Granted #{token}"
-  	end
+	  		redirect_to root_url, notice: "MFA Access Granted #{token}"
+	  	end
 
 
-  	def mfa_check
-  		if current_user.nil?
-  			redirect_to root_url, notice: 'MFA Two Factor Authentication request timed out with no response.'
-  		end
+	  	def mfa_check
+	  		if current_user.nil?
+	  			redirect_to root_url, notice: 'MFA Two Factor Authentication request timed out with no response.'
+	  		end
 
-  		acceptto = Acceptto::Client.new(Rails.configuration.mfa_app_uid,Rails.configuration.mfa_app_secret,Rails.configuration.mfa_call_back_url)
-  		status = acceptto.mfa_check(current_user.mfa_access_token,params[:channel])
+	  		acceptto = Acceptto::Client.new(Rails.configuration.mfa_app_uid,Rails.configuration.mfa_app_secret,Rails.configuration.mfa_call_back_url)
+	  		status = acceptto.mfa_check(current_user.mfa_access_token,params[:channel])
 
-  		if status == 'approved'
-  			current_user.update_attribute(:mfa_authenticated, true)
-  			redirect_to root_url, notice: 'MFA Two Factor Authentication request was accepted.'
-  		elsif status == 'rejected'
-  			current_user.update_attribute(:mfa_authenticated, false)
-  			sign_out(current_user)
-  			redirect_to root_url, notice: 'MFA Two Factor Authentication request was declined.'
-  		else
-  			redirect_to :controller => 'mfa', :action => 'index', :channel => params[:channel]
-  		end
-  	end
-  end
+	  		if status == 'approved'
+	  			current_user.update_attribute(:mfa_authenticated, true)
+	  			redirect_to root_url, notice: 'MFA Two Factor Authentication request was accepted.'
+	  		elsif status == 'rejected'
+	  			current_user.update_attribute(:mfa_authenticated, false)
+	  			sign_out(current_user)
+	  			redirect_to root_url, notice: 'MFA Two Factor Authentication request was declined.'
+	  		else
+	  			redirect_to :controller => 'mfa', :action => 'index', :channel => params[:channel]
+	  		end
+	  	end
+  	  end
 
 7- Create a new controller/view named: app/controllers/mfa_controller.rb and app/views/mfa/index.html.erb, content of mfa/index.html.rb:
 	
