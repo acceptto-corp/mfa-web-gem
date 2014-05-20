@@ -6,12 +6,10 @@ module Acceptto
 		M2M_SITE = 'https://mfa.acceptto.com'
 
 		attr_reader :app_uid, :app_secret,:call_back_url
-		def initialize(app_uid, app_secret, call_back_url, auth_message, mfa_type)
+		def initialize(app_uid, app_secret, call_back_url)
 			@app_uid = app_uid
 			@app_secret = app_secret
 			@call_back_url = call_back_url
-      @auth_message = auth_message
-      @mfa_type = mfa_type
 		end
 
 		def authorize_link
@@ -23,11 +21,11 @@ module Acceptto
 			access.token unless access.nil?
 		end
 
-		def authenticate(access_token)
+		def authenticate(access_token, auth_message, mfa_type)
 			result = ''
 
 			access = OAuth2::AccessToken.from_hash(oauth_client, {access_token:	access_token})
-			response = access.post('/api/v4/authenticate', params: {message: @auth_message, meta_data: {type: @mfa_type}}).parsed
+			response = access.post('/api/v4/authenticate', params: {message: auth_message, meta_data: {type: mfa_type}}).parsed
 			result = response['channel'] unless response.blank?
 
 			result
