@@ -3,7 +3,7 @@ require 'oauth2'
 
 module Acceptto
 	class Client
-		M2M_SITE = 'http://m2m.acceptto.net'
+		M2M_SITE = 'https://mfa.acceptto.com'
 
 		attr_reader :app_uid, :app_secret,:call_back_url
 		def initialize(app_uid, app_secret, call_back_url)
@@ -14,7 +14,6 @@ module Acceptto
 
 		def authorize_link
 			"#{M2M_SITE}/mfa/email?uid=#{@app_uid}"
-			#"#{M2M_SITE}/oauth/authorize?client_id=#{@app_uid}&redirect_uri=#{@call_back_url}&response_type=code"
 		end
 
 		def get_token(authorization_code)
