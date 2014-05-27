@@ -43,7 +43,7 @@ module Acceptto
 		end
 
 		def self.faye_server_address
-			return 'https://faye.acceptto.net/faye'
+			return 'http://faye.acceptto.net/faye'
 		end
 
 		private
