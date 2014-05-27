@@ -3,7 +3,7 @@ require 'oauth2'
 
 module Acceptto
 	class Client
-		M2M_SITE = 'https://mfa.acceptto.com'
+		M2M_SITE = 'http://localhost:3002'
 
 		attr_reader :app_uid, :app_secret,:call_back_url
 		def initialize(app_uid, app_secret, call_back_url)
@@ -43,7 +43,7 @@ module Acceptto
 		end
 
 		def self.faye_server_address
-			return 'https://faye.acceptto.net/faye'
+			return 'http://localhost:9292/faye'
 		end
 
 		private
