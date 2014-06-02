@@ -1,10 +1,10 @@
 # coding: utf-8
 lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require 'Acceptto/version'
+require 'acceptto/version'
 
 Gem::Specification.new do |spec|
-  spec.name          = 'Acceptto'
+  spec.name          = 'acceptto'
   spec.version       = Acceptto::VERSION
   spec.authors       = ['Acceptto']
   spec.email         = ['info@acceptto.com']

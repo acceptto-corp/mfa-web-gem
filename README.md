@@ -7,7 +7,7 @@ Acceptto is a Multi-Factor Authentication service that allows the use of your mo
 
 Add this line to your application's Gemfile:
 
-    gem 'Acceptto'
+    gem 'acceptto'
 
 And then execute:
 
@@ -15,7 +15,7 @@ And then execute:
 
 Or install it yourself as:
 
-    $ gem install Acceptto
+    $ gem install acceptto
 
 ## Usage
 

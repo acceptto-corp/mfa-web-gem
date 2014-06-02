@@ -1,4 +1,4 @@
-Copyright (c) 2014 ShaB
+Copyright (c) 2014 Acceptto
 
 MIT License
 
