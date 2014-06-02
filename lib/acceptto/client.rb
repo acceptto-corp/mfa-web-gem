@@ -2,7 +2,10 @@ require 'oauth2'
 
 module Acceptto
   class Client
-    M2M_SITE = (Rails.configuration.respond_to?(:mfa_site) ? Rails.configuration.mfa_site : 'https://m2m.acceptto.net')
+    
+    def self.M2M_SITE 
+      Rails.configuration.respond_to?(:mfa_site) ? Rails.configuration.mfa_site : 'https://m2m.acceptto.net'
+    end
 
     attr_reader :app_uid, :app_secret,:call_back_url
     def initialize(app_uid, app_secret, call_back_url)
@@ -10,11 +13,10 @@ module Acceptto
       @app_secret = app_secret
       @call_back_url = call_back_url
       p "Rails.configuration.mfa_site: #{Rails.configuration.mfa_site}"
-      p "M2M_SITE value is: #{M2M_SITE}"
     end
 
     def authorize_link
-      "#{M2M_SITE}/mfa/email?uid=#{@app_uid}"
+      "#{Acceptto::Client.M2M_SITE}/mfa/email?uid=#{@app_uid}"
     end
 
     def get_token(authorization_code)
@@ -44,17 +46,13 @@ module Acceptto
     end
 
     def self.faye_server_address
-      if defined? Rails.configuration.faye_address 
-        Rails.configuration.faye_address 
-      else
-        'https://faye.acceptto.net/faye'
-      end
+      Rails.configuration.respond_to?(:faye_address) ? Rails.configuration.faye_address : 'https://faye.acceptto.net/faye'
     end
 
     private
 
     def oauth_client
-      @oauth_client ||= OAuth2::Client.new(@app_uid,@app_secret, :site => M2M_SITE)
+      @oauth_client ||= OAuth2::Client.new(@app_uid,@app_secret, :site => Acceptto::Client.M2M_SITE)
     end
   end
 end
