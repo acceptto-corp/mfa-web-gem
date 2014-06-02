@@ -2,7 +2,7 @@ require 'oauth2'
 
 module Acceptto
   class Client
-    M2M_SITE = (defined?(Rails.configuration.mfa_site).nil?) ? 'https://m2m.acceptto.net' : Rails.configuration.mfa_site
+    M2M_SITE = (Rails.configuration.respond_to?(:mfa_site) ? Rails.configuration.mfa_site : 'https://m2m.acceptto.net')
 
     attr_reader :app_uid, :app_secret,:call_back_url
     def initialize(app_uid, app_secret, call_back_url)
