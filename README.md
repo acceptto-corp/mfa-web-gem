@@ -46,7 +46,7 @@ Or install it yourself as:
 
     get "mfa" => 'mfa#index'
 
-5- Add a before_filter to you ApplicationController.rb:
+5- Add a before_filter to you application_controller.rb:
 
     before_filter :check_mfa_authenticated
 
@@ -54,7 +54,7 @@ Or install it yourself as:
 
     # this check is extremely important, without this after doing login and before device accept (from mfa/index.html), user can go anywhere without mfa_authentication!
     def check_mfa_authenticated
-      if current_user.present? && !current_user.mfa_access_token.empty? && !current_user.mfa_authenticated?
+      if current_user.present? && !current_user.mfa_access_token.blank? && !current_user.mfa_authenticated?
         sign_out(current_user)
         redirect_to root_url, notice: 'MFA Two Factor Authenication required'
       end
@@ -71,7 +71,7 @@ Or install it yourself as:
         if resource.mfa_access_token.present?
             current_user.update_attribute(:mfa_authenticated, false)
             acceptto = Acceptto::Client.new(Rails.configuration.mfa_app_uid,Rails.configuration.mfa_app_secret,Rails.configuration.mfa_call_back_url)
-            @channel = acceptto.authenticate(resource.mfa_access_token)
+            @channel = acceptto.authenticate(resource.mfa_access_token, "[Your Application Name] wish to authorize", "Login")
             flash[:notice] = 'You have 60 seconds to respond to the request sent to your device.'
 
             redirect_to :controller => 'mfa', :action => 'index', :channel => @channel
@@ -88,9 +88,8 @@ Or install it yourself as:
 
     def mfa_callback
         acceptto = Acceptto::Client.new(Rails.configuration.mfa_app_uid,Rails.configuration.mfa_app_secret,Rails.configuration.mfa_call_back_url)
-        token = acceptto.get_token(params[:code])
-        current_user.update_attribute(:mfa_access_token, token)
-        current_user.update_attribute(:mfa_authenticated, true)
+	    current_organisation.update_attribute(:mfa_access_token, params[:access_token])
+	    current_organisation.update_attribute(:mfa_authenticated, true)
 
         redirect_to root_url, notice: "MFA Access Granted #{token}"
     end
