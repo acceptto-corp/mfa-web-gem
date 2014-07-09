@@ -24,10 +24,12 @@ module Acceptto
       access.token unless access.nil?
     end
 
-    def authenticate(access_token, auth_message, mfa_type, user_meta_data=nil)
+    def authenticate(access_token, auth_message, mfa_type, options={})
       result = ''
+      options[:type] = mfa_type
+      options[:message] = auth_message
       access = OAuth2::AccessToken.from_hash(oauth_client, {:access_token =>  access_token})
-      response = access.post('/api/v4/authenticate', :params => {:message => auth_message, :meta_data => { :type => mfa_type, :user_meta_data => user_meta_data }}).parsed
+      response = access.post('/api/v4/authenticate', :params => options ).parsed
       result = response['channel'] unless response.blank?
       result
     end
