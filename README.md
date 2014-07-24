@@ -28,12 +28,11 @@ Or install it yourself as:
 
     config.mfa_app_uid = 'application unique id you got from acceptto'
     config.mfa_app_secret = 'mfa app secret you got from acceptto'
-    config.mfa_call_back_url = 'put your callback url here'
 
-3- you can give users an option two enable multi facto authentication with this link for example in your view:
+3- you can give users an option two enable multi factor authentication with this link for example in your view:
 
     <% if !current_user.mfa_access_token.present? %>
-       <a href="><%= Acceptto::Client.new(Rails.configuration.mfa_app_uid,Rails.configuration.mfa_app_secret,Rails.configuration.mfa_call_back_url).authorize_link %>">Enable MFA</a>
+       <a href='<%= Acceptto::Client.new(Rails.configuration.mfa_app_uid,Rails.configuration.mfa_app_secret,"http://#{request.host_with_port}/auth/mfa/callback").authorize_link %>'>Enable MFA</a>
     <% end %>
 
 4- add the route for callback/check controller in routes.rb:
@@ -43,8 +42,6 @@ Or install it yourself as:
       match '/auth/mfa_check',    to: 'sessions#mfa_check',   via: :get
       match '/auth/mfa/callback', to: 'sessions#callback', via: :get
     end
-
-    get "mfa" => 'mfa#index'
 
 5- Add a before_filter to you application_controller.rb:
 
@@ -64,114 +61,73 @@ Or install it yourself as:
 6- Implement oauth create/callback/check functions in your sessions_controller:
 
     class SessionsController < Devise::SessionsController
-    skip_before_filter :check_mfa_authenticated
+        skip_before_filter :check_mfa_authenticated
 
-    def create
-        resource = warden.authenticate!(auth_options)
-        if resource.mfa_access_token.present?
-            current_user.update_attribute(:mfa_authenticated, false)
-            acceptto = Acceptto::Client.new(Rails.configuration.mfa_app_uid,Rails.configuration.mfa_app_secret,Rails.configuration.mfa_call_back_url)
-            @channel = acceptto.authenticate(resource.mfa_access_token, "[Your Application Name] wish to authorize", "Login")
-            flash[:notice] = 'You have 60 seconds to respond to the request sent to your device.'
+        def create
+            resource = warden.authenticate!(auth_options)
+            if resource.mfa_access_token.present?
+                resource.update_attribute(:mfa_authenticated, false)
+                acceptto = Acceptto::Client.new(Rails.configuration.mfa_app_uid, Rails.configuration.mfa_app_secret,"http://#{request.host_with_port}/auth/mfa/callback")
+                @channel = acceptto.authenticate(resource.mfa_access_token, "[Your Application Name] is wishing to authorize", "Login")
+                session[:channel] = @channel
+                callback_url = "#{ENV['SITE_URL']}/auth/mfa_check"
+                redirect_url = "#{ENV['M2M_SITE']}/mfa/index?channel=#{@channel}&callback_url=#{callback_url}"
+                return redirect_to redirect_url
+            else
+                sign_in(resource_name, resource)
+                respond_with(resource, location:root_path) do |format|
+                    format.json { render json: resource.as_json(root: false).merge(success: true), status: :created }
+                end
+            end
+        rescue OAuth2::Error => ex
+            resource.update_attribute(:mfa_access_token, nil)
+            redirect_to root_path, notice: 'You have unauthorized MFA access to Acceptto, you will need to Authorize MFA again.'
+        end
 
-            redirect_to :controller => 'mfa', :action => 'index', :channel => @channel
-        else
-            sign_in(resource_name, resource)
-            respond_with(resource, location:root_path) do |format|
-                format.json { render json: resource.as_json(root: false).merge(success: true), status: :created }
+        def mfa_callback
+            if params[:error].present?
+                  return redirect_to root_url, notice: params[:error]
+            end
+
+            if params[:access_token].blank?
+                return redirect_to root_url, notice: 'Invalid parameters!'
+            end
+
+            if current_user.nil?
+              sign_out(current_user)
+              return redirect_to root_url, notice: 'Your session timed out, please sign-in again!'
+            end
+
+            acceptto = Acceptto::Client.new(Rails.configuration.mfa_app_uid,Rails.configuration.mfa_app_secret,"http://#{request.host_with_port}/auth/mfa/callback")
+            current_user.update_attribute(:mfa_access_token, params[:access_token])
+            current_user.update_attribute(:mfa_authenticated, true)
+            redirect_to root_url, notice: "MFA Access Granted #{token}"
+        end
+
+        def mfa_check
+            if current_user.nil?
+              return redirect_to root_url, notice: 'Multi Factor Authentication request timed out with no response.'
+            end
+
+            if session[:channel].blank?
+                return redirect_to root_url, notice: 'Multi Factor Authentication request timed out with no response.'
+            end
+
+            @channel = session[:channel]
+            session[:channel] = ''
+
+            acceptto = Acceptto::Client.new(Rails.configuration.mfa_app_uid,Rails.configuration.mfa_app_secret,"http://#{request.host_with_port}/auth/mfa/callback")
+            status = acceptto.mfa_check(current_user.mfa_access_token, @channel)
+
+            if status == "approved"
+              current_user.update_attribute(:mfa_authenticated, true)
+              return redirect_to root_url, notice: 'Multi Factor Authentication request was accepted.'
+            elsif status == "rejected"
+              sign_out(current_user)
+              return redirect_to root_url, notice: 'Multi Factor Authentication request was declined.'
+            else
+              sign_out(current_user)
+              return redirect_to root_url, notice: 'Multi Factor Authentication request timed out with no response.'
             end
         end
-    rescue OAuth2::Error => ex
-        current_user.update_attribute(:mfa_access_token, nil)
-        redirect_to root_path, notice: 'You have unauthorized MFA access to Acceptto, you will need to Authorize MFA again.'
     end
-
-    def mfa_callback
-        acceptto = Acceptto::Client.new(Rails.configuration.mfa_app_uid,Rails.configuration.mfa_app_secret,Rails.configuration.mfa_call_back_url)
-	    current_organisation.update_attribute(:mfa_access_token, params[:access_token])
-	    current_organisation.update_attribute(:mfa_authenticated, true)
-
-        redirect_to root_url, notice: "MFA Access Granted #{token}"
-    end
-
-
-    def mfa_check
-        if current_user.nil?
-            redirect_to root_url, notice: 'MFA Two Factor Authentication request timed out with no response.'
-        end
-
-        acceptto = Acceptto::Client.new(Rails.configuration.mfa_app_uid,Rails.configuration.mfa_app_secret,Rails.configuration.mfa_call_back_url)
-        status = acceptto.mfa_check(current_user.mfa_access_token,params[:channel])
-
-        if status == 'approved'
-            current_user.update_attribute(:mfa_authenticated, true)
-            redirect_to root_url, notice: 'MFA Two Factor Authentication request was accepted.'
-        elsif status == 'rejected'
-            current_user.update_attribute(:mfa_authenticated, false)
-            sign_out(current_user)
-            redirect_to root_url, notice: 'MFA Two Factor Authentication request was declined.'
-        else
-            redirect_to :controller => 'mfa', :action => 'index', :channel => params[:channel]
-        end
-    end
-    end
-
-7- Create a new controller/view named: app/controllers/mfa_controller.rb and app/views/mfa/index.html.erb, content of mfa/index.html.rb:
-
-	<script type="text/javascript">
-    $(function() {
-        var faye = new Faye.Client("<%= APP_CONFIG['FAYE_SERVER'] %>");
-        faye.subscribe("/messages/<%= @channel %>", function(data) {
-            window.location.replace("/auth/mfa_check?channel=<%= @channel %>");
-        });
-
-        var now = new Date();
-
-        var target_date = new Date(now.getTime() + 60000);
-
-        // variables for time units
-        var days, hours, minutes, seconds;
-
-        // get tag element
-        var countdown = document.getElementById("notice");
-        var notice_text = countdown.innerHTML
-
-        // update the tag with id "countdown" every 1 second
-        setInterval(function () {
-
-            // find the amount of "seconds" between now and target
-            var current_date = new Date().getTime();
-            var seconds_left = (target_date - current_date) / 1000;
-
-            // do some time calculations
-            days = parseInt(seconds_left / 86400);
-            seconds_left = seconds_left % 86400;
-
-            hours = parseInt(seconds_left / 3600);
-            seconds_left = seconds_left % 3600;
-
-            minutes = parseInt(seconds_left / 60);
-            seconds = parseInt(seconds_left % 60);
-
-            if (seconds == 0) {
-                window.location.replace("/auth/mfa_check?channel=<%= @channel %>");
-            }
-
-            if (seconds <= 0) {
-                seconds = 0;
-            }
-
-            // format countdown string + set tag value
-            countdown.innerHTML = notice_text + " : " + days + "d, " + hours + "h, "
-                    + minutes + "m, " + seconds + "s";
-
-        }, 1000);
-
- 	   });
-	</script>
-
-8- Add javascript for faye to your head section in layout of your website:
-
-	<%= javascript_include_tag "#{APP_CONFIG['FAYE_SERVER']}/faye.js", "data-turbolinks-track" => false %>
-
-
