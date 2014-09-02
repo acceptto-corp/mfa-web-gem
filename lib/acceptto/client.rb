@@ -1,19 +1,22 @@
-require 'Acceptto/version'
 require 'oauth2'
 
 module Acceptto
   class Client
-    M2M_SITE = 'http://localhost:3002'
+    
+    def self.M2M_SITE 
+      Rails.configuration.respond_to?(:mfa_site) ? Rails.configuration.mfa_site : 'https://m2m.acceptto.net'
+    end
 
     attr_reader :app_uid, :app_secret,:call_back_url
     def initialize(app_uid, app_secret, call_back_url)
       @app_uid = app_uid
       @app_secret = app_secret
       @call_back_url = call_back_url
+      p "Rails.configuration.mfa_site: #{Rails.configuration.mfa_site}"
     end
 
     def authorize_link
-      "#{M2M_SITE}/mfa/email?uid=#{@app_uid}"
+      "#{Acceptto::Client.M2M_SITE}/mfa/email?uid=#{@app_uid}"
     end
 
     def get_token(authorization_code)
@@ -21,13 +24,13 @@ module Acceptto
       access.token unless access.nil?
     end
 
-    def authenticate(access_token, auth_message, mfa_type)
+    def authenticate(access_token, auth_message, mfa_type, options={})
       result = ''
-
+      options[:type] = mfa_type
+      options[:message] = auth_message
       access = OAuth2::AccessToken.from_hash(oauth_client, {:access_token =>  access_token})
-      response = access.post('/api/v4/authenticate', :params => {:message => auth_message, :meta_data => {:type => mfa_type}}).parsed
+      response = access.post('/api/v4/authenticate', :params => options ).parsed
       result = response['channel'] unless response.blank?
-
       result
     end
 
@@ -43,13 +46,13 @@ module Acceptto
     end
 
     def self.faye_server_address
-      return 'http://localhost:9292'
+      Rails.configuration.respond_to?(:faye_address) ? Rails.configuration.faye_address : 'https://faye.acceptto.net/faye'
     end
 
     private
 
     def oauth_client
-      @oauth_client ||= OAuth2::Client.new(@app_uid,@app_secret, :site => M2M_SITE)
+      @oauth_client ||= OAuth2::Client.new(@app_uid,@app_secret, :site => Acceptto::Client.M2M_SITE)
     end
   end
 end
