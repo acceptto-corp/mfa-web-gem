@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    acceptto (0.2.0)
+    acceptto (0.2.1)
 
 GEM
   remote: https://rubygems.org/
@@ -28,7 +28,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  Acceptto!
+  acceptto!
   bundler (~> 1.5)
   oauth2
   rake
