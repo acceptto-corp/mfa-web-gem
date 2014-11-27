@@ -29,7 +29,7 @@ module Acceptto
       options[:type] = mfa_type
       options[:message] = auth_message
       access = OAuth2::AccessToken.from_hash(oauth_client, {:access_token =>  access_token})
-      response = access.post('/api/v6/authenticate', :params => options ).parsed
+      response = access.post('/api/v8/authenticate', :params => options ).parsed
       result = response['channel'] unless response.blank?
       result
     end
