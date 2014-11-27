@@ -38,7 +38,7 @@ module Acceptto
       result = ''
 
       access = OAuth2::AccessToken.from_hash(oauth_client, {:access_token => access_token})
-      response = access.post('/api/v6/check', { :body => {:channel => channel}}).parsed
+      response = access.post('/api/v8/check', { :body => {:channel => channel}}).parsed
 
       result = response['status'] unless response.blank?
 
