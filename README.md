@@ -68,10 +68,10 @@ Or install it yourself as:
         resource = warden.authenticate!(auth_options)
         if resource.mfa_access_token.present?
                 resource.update_attribute(:mfa_authenticated, false)
-              acceptto = Acceptto::Client.new(Rails.configuration.mfa_app_uid, Rails.configuration.mfa_app_secret,"http://#{request.host_with_port}/auth/mfa/callback")
-              @channel = acceptto.authenticate(resource.mfa_access_token, "Acceptto is wishing to authorize", "Login")
+              acceptto = Acceptto::Client.new(Rails.configuration.mfa_app_uid, Rails.configuration.mfa_app_secret,"#{request.protocol + request.host_with_port}/auth/mfa/callback")
+              @channel = acceptto.authenticate(resource.mfa_access_token, "Acceptto is wishing to authorize", "Login", {:ip_address => request.ip, :remote_ip_address => request.remote_ip})
               session[:channel] = @channel
-              callback_url = "http://#{request.host_with_port}/auth/mfa_check"
+              callback_url = "#{request.protocol + request.host_with_port}/auth/mfa_check"
               redirect_url = "#{Rails.configuration.mfa_site}/mfa/index?channel=#{@channel}&callback_url=#{callback_url}"
               return redirect_to redirect_url
         else
