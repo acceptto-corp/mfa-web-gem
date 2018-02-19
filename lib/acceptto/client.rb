@@ -2,9 +2,9 @@ require 'oauth2'
 
 module Acceptto
   class Client
-    
-    def self.M2M_SITE 
-      Rails.configuration.respond_to?(:mfa_site) ? Rails.configuration.mfa_site : 'https://m2m.acceptto.net'
+
+    def self.M2M_SITE
+      Rails.configuration.respond_to?(:mfa_site) ? Rails.configuration.mfa_site : 'https://www.acceptto.com'
     end
 
     attr_reader :app_uid, :app_secret,:call_back_url
@@ -28,6 +28,10 @@ module Acceptto
       result = ''
       options[:type] = mfa_type
       options[:message] = auth_message
+      options['hash1'] = cookies[:hash1] if cookies[:hash1]
+      options['hash2'] = cookies[:hash2] if cookies[:hash2]
+      options['hash3'] = cookies[:hash3] if cookies[:hash3]
+      options['hash4'] = cookies[:hash4] if cookies[:hash4]
       access = OAuth2::AccessToken.from_hash(oauth_client, {:access_token =>  access_token})
       response = access.post('/api/v8/authenticate', :params => options ).parsed
       result = response['channel'] unless response.blank?
