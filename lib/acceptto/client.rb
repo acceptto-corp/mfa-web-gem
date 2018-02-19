@@ -12,7 +12,6 @@ module Acceptto
       @app_uid = app_uid
       @app_secret = app_secret
       @call_back_url = call_back_url
-      p "Rails.configuration.mfa_site: #{Rails.configuration.mfa_site}"
     end
 
     def authorize_link
@@ -50,7 +49,7 @@ module Acceptto
     end
 
     def self.faye_server_address
-      Rails.configuration.respond_to?(:faye_address) ? Rails.configuration.faye_address : 'https://faye.acceptto.net/faye'
+      Rails.configuration.respond_to?(:faye_address) ? Rails.configuration.faye_address : 'https://faye.acceptto.com/faye'
     end
 
     private
