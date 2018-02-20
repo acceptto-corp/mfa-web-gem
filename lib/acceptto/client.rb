@@ -15,7 +15,7 @@ module Acceptto
     end
 
     def authorize_link
-      "#{Acceptto::Client.M2M_SITE}/mfa/email?uid=#{@app_uid}"
+      "#{Acceptto::Client.M2M_SITE}/mfa/email?uid=#{@app_uid}&callback_url=#{@call_back_url}"
     end
 
     def get_token(authorization_code)
@@ -27,10 +27,10 @@ module Acceptto
       result = ''
       options[:type] = mfa_type
       options[:message] = auth_message
-      options['hash1'] = cookies[:hash1] if cookies[:hash1]
-      options['hash2'] = cookies[:hash2] if cookies[:hash2]
-      options['hash3'] = cookies[:hash3] if cookies[:hash3]
-      options['hash4'] = cookies[:hash4] if cookies[:hash4]
+      options[:hash1] = cookies[:hash1] if cookies[:hash1]
+      options[:hash2] = cookies[:hash2] if cookies[:hash2]
+      options[:hash3] = cookies[:hash3] if cookies[:hash3]
+      options[:hash4] = cookies[:hash4] if cookies[:hash4]
       access = OAuth2::AccessToken.from_hash(oauth_client, {:access_token =>  access_token})
       response = access.post('/api/v8/authenticate', :params => options ).parsed
       result = response['channel'] unless response.blank?
