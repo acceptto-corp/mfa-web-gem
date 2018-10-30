@@ -1,34 +1,34 @@
 PATH
   remote: .
   specs:
-    acceptto (1.0.0)
+    acceptto (1.2)
+      bundler
+      oauth2
+      rake
 
 GEM
   remote: https://rubygems.org/
   specs:
-    faraday (0.12.2)
+    faraday (0.15.3)
       multipart-post (>= 1.2, < 3)
-    jwt (1.5.6)
+    jwt (2.1.0)
     multi_json (1.13.1)
     multi_xml (0.6.0)
     multipart-post (2.0.0)
-    oauth2 (1.4.0)
-      faraday (>= 0.8, < 0.13)
-      jwt (~> 1.0)
+    oauth2 (1.4.1)
+      faraday (>= 0.8, < 0.16.0)
+      jwt (>= 1.0, < 3.0)
       multi_json (~> 1.3)
       multi_xml (~> 0.5)
       rack (>= 1.2, < 3)
-    rack (2.0.4)
-    rake (12.3.0)
+    rack (2.0.5)
+    rake (12.3.1)
 
 PLATFORMS
   ruby
 
 DEPENDENCIES
   acceptto!
-  bundler
-  oauth2
-  rake
 
 BUNDLED WITH
-   1.16.1
+   1.16.5

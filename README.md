@@ -7,15 +7,11 @@ Acceptto is a Multi-Factor Authentication service that allows the use of your mo
 
 Add this line to your application's Gemfile:
 
-    gem 'acceptto'
+    gem 'acceptto', :github => 'acceptto-corp/mfa-web-gem', :branch => 'master'
 
 And then execute:
 
     $ bundle install
-
-Or install it yourself as:
-
-    $ gem install acceptto
 
 ## Usage
 
