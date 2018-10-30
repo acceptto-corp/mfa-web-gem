@@ -44,6 +44,7 @@ Here is the breakdown of all the necessary steps to implement Acceptto MFA on an
 
 5- Add a  before_action to you application_controller.rb:
 
+```ruby
     before_action :check_mfa_authenticated
 
     private
@@ -55,10 +56,11 @@ Here is the breakdown of all the necessary steps to implement Acceptto MFA on an
         redirect_to root_url, notice: 'MFA Two Factor Authenication required'
       end
     end
-
+```
 
 6- Implement oauth create/callback/check functions in your sessions_controller:
 
+```ruby
 	class SessionsController < Devise::SessionsController
 	  skip_before_action :check_mfa_authenticated
 
@@ -125,3 +127,4 @@ Here is the breakdown of all the necessary steps to implement Acceptto MFA on an
 	      end
 	  end
 	end
+```
