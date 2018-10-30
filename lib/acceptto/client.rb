@@ -2,6 +2,8 @@ require 'oauth2'
 
 module Acceptto
   class Client
+    
+    include ActionController::Cookies
 
     def self.M2M_SITE
       Rails.configuration.respond_to?(:mfa_site) ? Rails.configuration.mfa_site : 'https://www.acceptto.com'
