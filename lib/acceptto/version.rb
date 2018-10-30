@@ -1,3 +1,3 @@
 module Acceptto
-  VERSION = '1.2.1'
+  VERSION = '1.2.7'
 end

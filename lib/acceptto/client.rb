@@ -6,7 +6,7 @@ module Acceptto
     include ActionController::Cookies
 
     def self.M2M_SITE
-      Rails.configuration.respond_to?(:mfa_site) ? Rails.configuration.mfa_site : 'https://www.acceptto.com'
+      Rails.configuration.respond_to?(:mfa_site) ? Rails.configuration.mfa_site : 'https://mfa.acceptto.com'
     end
 
     attr_reader :app_uid, :app_secret,:call_back_url
@@ -25,7 +25,7 @@ module Acceptto
       access.token unless access.nil?
     end
 
-    def authenticate(access_token, auth_message, mfa_type, options={})
+    def authenticate(access_token, auth_message, mfa_type, cookies, options={})
       result = ''
       options[:type] = mfa_type
       options[:message] = auth_message
