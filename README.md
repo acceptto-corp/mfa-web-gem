@@ -7,13 +7,17 @@ Acceptto is a Multi-Factor Authentication service that allows the use of your mo
 
 Add this line to your application's Gemfile:
 
-    gem 'acceptto', :github => 'acceptto-corp/mfa-web-gem', :branch => 'master'
+    gem 'acceptto', '~> 1.2', :github => 'acceptto-corp/mfa-web-gem'
 
 And then execute:
 
     $ bundle install
 
 ## Usage
+
+Sample Application is available here:  https://github.com/acceptto-corp/sample_rails_mfa
+
+Here is the breakdown of all the necessary steps to implement Acceptto MFA on an existing application:
 
 1- Add two fields to your user model:
 
@@ -36,7 +40,7 @@ And then execute:
 
     devise_for :users, controllers: { sessions: "sessions" }
     devise_scope :user do
-      match '/auth/mfa_check',    to: 'sessions#mfa_check',   via: :get
+      match '/auth/mfa/check',    to: 'sessions#mfa_check',   via: :get
       match '/auth/mfa/callback', to: 'sessions#mfa_callback', via: :get
     end
 
@@ -67,7 +71,7 @@ And then execute:
 	            acceptto = Acceptto::Client.new(Rails.configuration.mfa_app_uid, Rails.configuration.mfa_app_secret,"#{request.protocol + request.host_with_port}/auth/mfa/callback")
 	            @channel = acceptto.authenticate(resource.mfa_access_token, "Acceptto is wishing to authorize", "Login", cookies, {:ip_address => request.ip, :remote_ip_address => request.remote_ip})
 	            session[:channel] = @channel
-	            callback_url = "#{request.protocol + request.host_with_port}/auth/mfa_check"
+	            callback_url = "#{request.protocol + request.host_with_port}/auth/mfa/check"
 	            redirect_url = "#{Rails.configuration.mfa_site}/mfa/index?channel=#{@channel}&callback_url=#{callback_url}"
 	            return redirect_to redirect_url
 	      else
@@ -113,7 +117,7 @@ And then execute:
 
 	      if status == 'approved'
 	          current_user.update_attribute(:mfa_authenticated, true)
-	          redirect_to root_url, notice: 'MFA Two Factor Authentication request was accepted.'
+	          redirect_to after_sign_in_path_for(current_user), notice: 'MFA Two Factor Authentication request was accepted.'
 	      elsif status == 'rejected'
 	          current_user.update_attribute(:mfa_authenticated, false)
 	          sign_out(current_user)
