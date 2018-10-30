@@ -37,7 +37,7 @@ And then execute:
     devise_for :users, controllers: { sessions: "sessions" }
     devise_scope :user do
       match '/auth/mfa_check',    to: 'sessions#mfa_check',   via: :get
-      match '/auth/mfa/callback', to: 'sessions#callback', via: :get
+      match '/auth/mfa/callback', to: 'sessions#mfa_callback', via: :get
     end
 
 5- Add a  before_action to you application_controller.rb:
