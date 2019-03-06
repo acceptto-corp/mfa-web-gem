@@ -2,7 +2,8 @@ require 'oauth2'
 
 module Acceptto
   class Client
-    
+
+    include ActionController::Helpers
     include ActionController::Cookies
 
     def self.M2M_SITE
